@@ -1,101 +1,54 @@
 const temperatureValue = document.getElementById("temperatureValue");
-const mySubmitButton = document.getElementById("submitButton");
-const myResetButton = document.getElementById("resetButton");
+const submitButton = document.getElementById("submitButton");
+const resetButton = document.getElementById("resetButton");
 const tempValue = document.getElementById("tempValue");
-// const selectedRadio = document.querySelector('input[name="tempUnit"]:checked'); //Not Needed Without The Code On Line 127 - 144
 
-celsiusToKelvin = (celsius) => {
-  const Kelvin = celsius + 273;
-  return Kelvin;
-};
+const celsiusToKelvin = (celsius) => celsius + 273.15;
 
-celsiusToFahrenheit = (celsius) => {
-  const Fahrenheit = (celsius * 9) / 5 + 32;
-  return Fahrenheit;
-};
+const celsiusToFahrenheit = (celsius) => (celsius * 9) / 5 + 32;
 
-kelvinToFahrenheit = (kelvin) => {
-  const Fahrenheit = ((kelvin - 273) * 9) / 5 + 32;
-  return Fahrenheit;
-};
+const kelvinToFahrenheit = (kelvin) => ((kelvin - 273.15) * 9) / 5 + 32;
 
-fahrenheitToKelvin = (Fahrenheit) => {
-  const Kelvin = ((Fahrenheit - 32) * 5) / 9 + 273;
-  return Kelvin;
-};
+const fahrenheitToKelvin = (fahrenheit) => ((fahrenheit - 32) * 5) / 9 + 273.15;
 
-// Adds The Units And Displays The Output On The Document.
+// Formats the result with the matching unit label.
+const formatTemperature = (value, unit) => {
+  const formatted = value.toLocaleString("en-GB", {
+    style: "unit",
+    unit: unit === "F" ? "fahrenheit" : "celsius",
+    unitDisplay: "short",
+    maximumFractionDigits: 2,
+  });
 
-tempertaureFormattedWithUnits = (value, tempUnit) => {
-  let unit = "";
-
-  if (tempUnit === "C") {
-    unit = value.toLocaleString("en-GB", {
-      style: "unit",
-      unit: "celsius",
-      unitDisplay: "short",
-    });
-  } else if (tempUnit === "F") {
-    unit = value.toLocaleString("en-GB", {
-      style: "unit",
-      unit: "fahrenheit",
-      unitDisplay: "short",
-    });
-  } else if (tempUnit === "K") {
-    unit = value.toLocaleString("en-GB", {
-      style: "unit",
-      unit: "celsius",
-      unitDisplay: "short",
-    });
-    unit = unit.replace("°C", "K");
+  if (unit === "K") {
+    return formatted.replace("°C", " K");
   }
 
-  tempValue.innerHTML = `${unit}`;
+  return formatted;
 };
 
-// Submit Button Handler. This comment is unnecessary, but, imma add it anyway.
+submitButton.addEventListener("click", () => {
+  const input = temperatureValue.value.trim();
+  const temperature = Number(input);
 
-mySubmitButton.addEventListener("click", () => {
-  const temperature = parseInt(temperatureValue.value);
+  if (input === "" || Number.isNaN(temperature)) {
+    alert("Please enter a numerical value.");
+    return;
+  }
 
-  if (isNaN(temperature)) {
-    alert("Please Enter a Numerical Value!!");
-  } else {
-    //It Doesn't Work. Please Help! 😥😥
-
-    // switch(selectedRadio){
-    //    case "celsiusToKelvin":
-    //       tempValue.innerHTML = celsiusToKelvin(temperatureValue);
-    //       break;
-    //    case "celsiusToFahrenheit":
-    //       tempValue.innerHTML = celsiusToFahrenheit(temperatureValue);
-    //       break;
-    //    case "kelvinToFahrenheit":
-    //       tempValue.innerHTML = kelvinToFahrenheit(temperatureValue);
-    //       break;
-    //    case "fahrenheitToKelvin":
-    //       tempValue.innerHTML = fahrenheitToKelvin(temperatureValue);
-    //       break;
-    //    default:
-    //       tempValue.innerHTML = '';
-    // }
-
-    // I'm Not Good At Leaving Commented Messages So I hope You Understood What I Did.
-
-    if (document.getElementById("celsiusToKelvin").checked) {
-      tempertaureFormattedWithUnits(celsiusToKelvin(temperature), "K");
-    } else if (document.getElementById("celsiusToFahrenheit").checked) {
-      tempertaureFormattedWithUnits(celsiusToFahrenheit(temperature), "F");
-    } else if (document.getElementById("kelvinToFahrenheit").checked) {
-      tempertaureFormattedWithUnits(kelvinToFahrenheit(temperature), "F");
-    } else if (document.getElementById("fahrenheitToKelvin").checked) {
-      tempertaureFormattedWithUnits(fahrenheitToKelvin(temperature), "K");
-    }
+  if (document.getElementById("celsiusToKelvin").checked) {
+    tempValue.textContent = formatTemperature(celsiusToKelvin(temperature), "K");
+  } else if (document.getElementById("celsiusToFahrenheit").checked) {
+    tempValue.textContent = formatTemperature(celsiusToFahrenheit(temperature), "F");
+  } else if (document.getElementById("kelvinToFahrenheit").checked) {
+    tempValue.textContent = formatTemperature(kelvinToFahrenheit(temperature), "F");
+  } else if (document.getElementById("fahrenheitToKelvin").checked) {
+    tempValue.textContent = formatTemperature(fahrenheitToKelvin(temperature), "K");
   }
 });
 
-// It Does What The Name Implies. It Resets The Value ಠ_ಠ
-
-myResetButton.addEventListener("click", () => {
-  tempValue.innerHTML = 0;
+resetButton.addEventListener("click", () => {
+  temperatureValue.value = "";
+  tempValue.textContent = "";
+  document.getElementById("celsiusToKelvin").checked = true;
 });
