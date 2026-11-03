@@ -109,3 +109,112 @@ test('validate: huge-but-finite input is range-checked', () => {
   assert.equal(r.reason, 'range');
   assert.equal(core.validate(1e6, 'C').ok, true);
 });
+
+// ── feels-like model ──────────────────────────────────────────
+
+test('windChill: NWS reference — 0 °F with 15 mph wind ≈ -19.4 °F', () => {
+  // 0 °F = -17.7778 °C; 15 mph = 24.1402 km/h
+  const wc = core.windChill(-17.7778, 24.1402);
+  assert.equal(wc.ok, true);
+  const f = core.fromC(wc.value, 'F');
+  assert.ok(Math.abs(f - (-19.45)) < 0.6, `expected about -19 °F, got ${f}`);
+});
+
+test('windChill: colder wind means colder feel (monotonic)', () => {
+  const a = core.windChill(-10, 10);
+  const b = core.windChill(-10, 40);
+  assert.equal(a.ok && b.ok, true);
+  assert.ok(b.value < a.value, `breeze ${a.value} vs gale ${b.value}`);
+});
+
+test('windChill: validity window enforced', () => {
+  assert.equal(core.windChill(10, 4.8).ok, true);
+  assert.equal(core.windChill(10.01, 10).reason, 'cold');
+  assert.equal(core.windChill(5, 4.7).reason, 'wind');
+  assert.equal(core.windChill(5, 0).reason, 'wind');
+  assert.equal(core.windChill(5, 501).reason, 'range');
+  assert.equal(core.windChill(NaN, 20).reason, 'range');
+});
+
+test('heatIndex: NWS reference — 90 °F at 70% RH ≈ 106 °F', () => {
+  // 90 °F = 32.2222 °C
+  const hi = core.heatIndex(32.2222, 70);
+  assert.equal(hi.ok, true);
+  const f = core.fromC(hi.value, 'F');
+  assert.ok(Math.abs(f - 106.2) < 0.6, `expected about 106 °F, got ${f}`);
+});
+
+test('heatIndex: engages full regression at the 27 °C validity gate', () => {
+  // 27 °C = 80.6 °F, 40% RH — full Rothfusz path, result ≈ 80.3 °F
+  const hi = core.heatIndex(27, 40);
+  assert.equal(hi.ok, true);
+  const f = core.fromC(hi.value, 'F');
+  assert.ok(f > 79 && f < 82, `expected near 80 °F, got ${f}`);
+});
+
+test('heatIndex: NWS humid adjustment (RH > 85) within the 80–87 °F band', () => {
+  // 86 °F, 90% RH — inside the regression's humid correction band
+  const hi = core.heatIndex(30, 90);
+  assert.equal(hi.ok, true);
+  const f = core.fromC(hi.value, 'F');
+  assert.ok(f > 102 && f < 115, `got ${f} °F`);
+});
+
+test('heatIndex: validity window enforced', () => {
+  assert.equal(core.heatIndex(27, 40).ok, true);
+  assert.equal(core.heatIndex(26.99, 60).reason, 'heat');
+  assert.equal(core.heatIndex(35, 39.9).reason, 'rh');
+  assert.equal(core.heatIndex(35, 100.1).reason, 'range');
+  assert.equal(core.heatIndex(35, -1).reason, 'range');
+  assert.equal(core.heatIndex(NaN, 60).reason, 'range');
+});
+
+test('feelsLike: dispatch picks wind chill in cold, heat index in heat', () => {
+  const cold = core.feelsLike(-10, { windKmh: 20, rhPct: null });
+  assert.equal(cold.ok, true);
+  assert.equal(cold.mode, 'chill');
+  const heat = core.feelsLike(35, { windKmh: null, rhPct: 60 });
+  assert.equal(heat.ok, true);
+  assert.equal(heat.mode, 'heat');
+  const both = core.feelsLike(35, { windKmh: 15, rhPct: 60 });
+  assert.equal(both.ok, true);
+  assert.equal(both.mode, 'heat');
+});
+
+test('feelsLike: clear n/a reasons outside the model windows', () => {
+  assert.equal(core.feelsLike(20, { windKmh: null, rhPct: null }).reason, 'window');
+  assert.equal(core.feelsLike(-5, { windKmh: null, rhPct: null }).reason, 'cold');
+  assert.equal(core.feelsLike(35, { windKmh: null, rhPct: null }).reason, 'heat');
+  assert.equal(core.feelsLike(-5, { windKmh: 2, rhPct: null }).reason, 'wind');
+  assert.equal(core.feelsLike(-5, { windKmh: 20, rhPct: null }).mode, 'chill');
+  assert.equal(core.feelsLike(20, { windKmh: 20, rhPct: null }).reason, 'window');
+  assert.equal(core.feelsLike(35, { windKmh: null, rhPct: 39.9 }).reason, 'rh');
+});
+
+test('feelsLike values are noiseless when formatted', () => {
+  const wc = core.windChill(-17.7778, 24.1402);
+  assert.ok(/^-?\d+(\.\d{1,4})?$/.test(core.fmt(wc.value, 2)), core.fmt(wc.value, 2));
+  const hi = core.heatIndex(32.2222, 70);
+  assert.ok(/^-?\d+(\.\d{1,4})?$/.test(core.fmt(hi.value, 2)), core.fmt(hi.value, 2));
+});
+
+// ── direct unit paths (limitation 2 — no chained Celsius float noise) ──
+
+test('K↔R is direct delta-scaling: 300 K = 540 °R exactly', () => {
+  assert.equal(core.fmt(core.convert(300, 'K', 'R'), 2), '540.00');
+  assert.equal(core.fmt(core.convert(540, 'R', 'K'), 2), '300.00');
+});
+
+test('F↔R is a pure offset: 32 °F = 491.67 °R exactly', () => {
+  assert.equal(core.fmt(core.convert(32, 'F', 'R'), 2), '491.67');
+  assert.equal(core.fmt(core.convert(491.67, 'R', 'F'), 2), '32.00');
+});
+
+test('no float noise in fmt output across all 16 pairs', () => {
+  const scales = ['C', 'F', 'K', 'R'];
+  const values = [0, 1, -40, 37, 100, 212, 36.6, 273.15, 300, 32, 491.67, 540, -273.15, 459.67];
+  for (const a of scales) for (const b of scales) for (const v of values) {
+    const out = core.fmt(core.convert(v, a, b), 2);
+    assert.ok(/^-?\d{1,15}(\.\d{1,2})?$/.test(out), `${v} ${a}->${b} gave "${out}"`);
+  }
+});
