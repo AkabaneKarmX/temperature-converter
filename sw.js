@@ -1,12 +1,12 @@
 /*
- * TEMP·CONV service worker — same-origin only, versioned cache,
+ * TEMPÂ·CONV service worker â€” same-origin only, versioned cache,
  * no opaque or cross-origin responses are ever stored.
  * Update path: bump CACHE -> old caches purged on activate,
  * or client sends SKIP_WAITING which reloads once.
  */
 'use strict';
 
-const CACHE = 'tempconv-v3.0.1';
+const CACHE = 'tempconv-v3.1.0';
 const ASSETS = [
   './index.html',
   './Stylesheets/app.css',
