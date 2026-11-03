@@ -41,11 +41,22 @@
   var elTheme = $('theme-toggle');
   var elShare = $('btn-share');
   var elUpdate = $('btn-update');
+  var elFlPanel = $('fl-panel');
+  var elFlVal = $('fl-val');
+  var elFlStatus = $('fl-status');
+  var elWind = $('input-wind');
+  var elRh = $('input-rh');
+  var elWuTag = $('wind-unit-tag');
+  var elWuKmh = $('wu-kmh');
+  var elWuMph = $('wu-mph');
 
   var SYM = { C: '°C', F: '°F', K: 'K', R: '°R' };
   var NAME = { C: 'Celsius', F: 'Fahrenheit', K: 'Kelvin', R: 'Rankine' };
   var PRESET_REFS = [0, 37, 100, -273.15];
-  var STORE = { units: 'tc.units', prec: 'tc.prec', theme: 'tc.theme', recent: 'tc.recent' };
+  var STORE = { units: 'tc.units', prec: 'tc.prec', theme: 'tc.theme', recent: 'tc.recent', windUnit: 'tc.windUnit', flPanel: 'tc.flPanel' };
+  var MPH_PER_KMH = 1 / 1.609344;
+  var KMH_PER_MPH = 1.609344;
+  var WIND_MAX_KMH = 500;
 
   /* ── storage (validated read, guarded write) ────────────────── */
   function lsRead(key, validator) {
@@ -79,6 +90,14 @@
     return (v === 'dark' || v === 'light') ? v : null;
   }
 
+  function validWindUnit(v) {
+    return (v === 'kmh' || v === 'mph') ? v : null;
+  }
+
+  function validFlPanel(v) {
+    return (v === 'open' || v === 'closed') ? v : null;
+  }
+
   function validRecent(v) {
     if (!Array.isArray(v)) return null;
     var out = [];
@@ -97,6 +116,7 @@
     units: lsRead(STORE.units, validUnits),
     prec: lsRead(STORE.prec, validPrec),
     recent: lsRead(STORE.recent, validRecent),
+    windUnit: lsRead(STORE.windUnit, validWindUnit) || 'kmh',
     lastValid: null,
     urlTouched: false
   };
@@ -200,8 +220,15 @@
     return pal;
   }
   function setHeroTempColor(c) {
+    applyTempColor(elHeroVal, c);
+  }
+  function applyTempColor(el, c) {
     if (!pal) palette();
     var s;
+    if (c === null || typeof c !== 'number' || !isFinite(c)) {
+      el.style.color = '';
+      return;
+    }
     if (c <= 20) {
       // cold side: max cold-blue at -40°, neutral at 20° — make 37° body-temp feel mildly warm
       s = 0.5 * ((c + 40) / 60);
@@ -209,7 +236,7 @@
       s = 0.5 + 0.5 * ((c - 20) / 40);
     }
     s = Math.max(0, Math.min(1, s));
-    elHeroVal.style.color = s < 0.5
+    el.style.color = s < 0.5
       ? mix(pal.cold, pal.fg, s / 0.5)
       : mix(pal.fg, pal.hot, (s - 0.5) / 0.5);
   }
@@ -241,6 +268,74 @@
     range: 'OUT OF RANGE — instrument caps at ±1e12 °C'
   };
 
+  /* ── feels-like model wiring (optional panel) ────────────────── */
+  function optValue(raw, cap) {
+    var p = T.parseInput(String(raw), cap);
+    if (p.empty || !p.ok) return null;
+    return p.value;
+  }
+
+  function flIdle() {
+    elFlVal.textContent = '——';
+    elFlVal.classList.add('is-empty');
+    elFlVal.style.color = '';
+    elFlStatus.textContent = '';
+  }
+
+  function feelNAMsg(reason, windGiven, tempC) {
+    switch (reason) {
+      case 'wind':
+        return windGiven
+          ? 'N/A — WIND TOO LIGHT (MIN ' + (state.windUnit === 'mph' ? '3 MPH' : '4.8 KM/H') + ')'
+          : 'N/A — COLD NEEDS WIND SPEED';
+      case 'cold': return 'N/A — WIND CHILL NEEDS WIND SPEED';
+      case 'heat':
+        return tempC >= 27
+          ? 'N/A — HEAT INDEX NEEDS HUMIDITY'
+          : 'N/A — HEAT INDEX NEEDS ≥ 27 °C';
+      case 'rh': return 'N/A — HUMIDITY TOO LOW (MIN 40%)';
+      case 'range': return 'N/A — WIND OR HUMIDITY OUT OF RANGE';
+      default: return 'N/A — NEEDS ≤ 10 °C OR ≥ 27 °C';
+    }
+  }
+
+  function updateFeels(c) {
+    if (typeof c !== 'number' || !isFinite(c)) { flIdle(); return { applied: false }; }
+    var windRaw = optValue(elWind.value, 7);
+    var rhRaw = optValue(elRh.value, 5);
+    var windKmh = null;
+    var rhPct = null;
+    if (windRaw !== null) {
+      windKmh = Math.min(windRaw * (state.windUnit === 'mph' ? KMH_PER_MPH : 1), WIND_MAX_KMH);
+    }
+    if (rhRaw !== null) {
+      rhPct = Math.min(Math.max(rhRaw, 0), 100);
+    }
+    var r = T.feelsLike(c, { windKmh: windKmh, rhPct: rhPct });
+    var toU = state.units.to;
+    if (r.ok) {
+      elFlVal.classList.remove('is-empty');
+      elFlVal.textContent = T.fmt(T.convert(r.value, 'C', toU), state.prec);
+      applyTempColor(elFlVal, r.value);
+      elFlStatus.textContent = '';
+      return { applied: true, c: r.value, display: elFlVal.textContent + ' ' + SYM[toU] };
+    }
+    flIdle();
+    elFlStatus.textContent = feelNAMsg(r.reason, windRaw !== null, c);
+    return { applied: false };
+  }
+
+  function applyWindUnit(unit, persist) {
+    state.windUnit = unit;
+    elWuKmh.setAttribute('aria-pressed', String(unit === 'kmh'));
+    elWuMph.setAttribute('aria-pressed', String(unit === 'mph'));
+    elWuTag.textContent = unit === 'mph' ? 'MPH' : 'KM/H';
+    if (persist) {
+      lsWrite(STORE.windUnit, unit);
+      if (state.lastValid) compute();
+    }
+  }
+
   /* ── url sync (shareable state) ─────────────────────────────── */
   function syncUrl() {
     if (!state.lastValid) return;
@@ -260,6 +355,7 @@
     elHeroVal.textContent = '——';
     elHeroVal.classList.add('is-empty');
     resetHeroColor();
+    flIdle();
     T.SCALES.forEach(function (u) { elRowVal[u].textContent = '——'; });
     elHint.textContent = 'AWAITING INPUT';
     elErr.textContent = '';
@@ -280,6 +376,7 @@
     elHeroVal.textContent = '——';
     elHeroVal.classList.add('is-empty');
     resetHeroColor();
+    flIdle();
     T.SCALES.forEach(function (u) { elRowVal[u].textContent = '——'; });
     elHint.textContent = 'AWAITING VALID INPUT';
     elLive.textContent = msg;
@@ -321,11 +418,19 @@
 
     elHint.textContent = feelPhrase(vres.c);
 
+    var fl = updateFeels(vres.c);
+    if (fl.applied) {
+      elHint.textContent = feelPhrase(fl.c);
+    }
+
     var parts = [];
     T.SCALES.forEach(function (u) {
       if (u !== fromU) parts.push(T.fmt(T.convert(parsed.value, fromU, u), prec) + ' ' + SYM[u]);
     });
-    elLive.textContent = parsed.value + ' ' + SYM[fromU] + ' equals ' + parts.join(', ') + '. ' + feelPhrase(vres.c);
+    var feelNote = fl.applied
+      ? 'Feels like ' + fl.display + '. ' + feelPhrase(fl.c)
+      : feelPhrase(vres.c);
+    elLive.textContent = parsed.value + ' ' + SYM[fromU] + ' equals ' + parts.join(', ') + '. ' + feelNote;
   }
 
   /* ── compute pipeline ───────────────────────────────────────── */
@@ -479,6 +584,15 @@
     compute();
   });
 
+  /* ── feels-like panel ───────────────────────────────────────── */
+  elWind.addEventListener('input', compute);
+  elRh.addEventListener('input', compute);
+  elWuKmh.addEventListener('click', function () { applyWindUnit('kmh', true); });
+  elWuMph.addEventListener('click', function () { applyWindUnit('mph', true); });
+  elFlPanel.addEventListener('toggle', function () {
+    lsWrite(STORE.flPanel, elFlPanel.open ? 'open' : 'closed');
+  });
+
   /* ── input keyboard ─────────────────────────────────────────── */
   elInput.addEventListener('input', compute);
   elInput.addEventListener('focus', function () { try { elInput.select(); } catch (e) {} });
@@ -580,5 +694,9 @@
   /* ── boot ───────────────────────────────────────────────────── */
   syncUnitTags();
   renderRecent();
+  applyWindUnit(state.windUnit, false);
+  if (lsRead(STORE.flPanel, validFlPanel) === 'open') {
+    elFlPanel.open = true;
+  }
   compute();
 })();

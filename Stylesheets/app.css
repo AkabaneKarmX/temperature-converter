@@ -484,6 +484,127 @@ button, a, [role="button"] {
 
 .row .copy-chip { min-width: 56px; min-height: 40px; }
 
+/* ── feels-like panel ────────────────────────────────────────── */
+.fl-panel {
+  margin-top: var(--sp-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-1);
+}
+
+.fl-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-1) 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.fl-summary::-webkit-details-marker { display: none; }
+
+.fl-caret {
+  color: var(--faint);
+  font-size: var(--step--2);
+}
+
+.fl-panel[open] .fl-caret { transform: rotate(90deg); }
+
+.fl-title {
+  font-size: var(--step--2);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+}
+
+.fl-val {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  min-width: 0;
+}
+
+.fl-val.is-empty { opacity: 0.35; }
+
+.fl-note {
+  margin: var(--sp-2) 0 var(--sp-3);
+  font-size: var(--step--4);
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  line-height: 1.6;
+}
+
+.fl-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.fl-input {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+  background: var(--field);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-0);
+}
+
+.fl-input::placeholder { color: var(--faint); }
+
+.wu-toggle { display: flex; gap: var(--sp-2); }
+
+.wu-chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  font-family: var(--mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  background: var(--field);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-0);
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fl-caret { transition: transform 130ms ease-out; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fl-summary:hover .fl-caret,
+  .fl-summary:hover .fl-title { color: var(--fg); }
+  .wu-chip:hover { border-color: var(--dim); color: var(--fg); }
+  .wu-chip[aria-pressed="true"]:hover { color: var(--bg); }
+}
+
+.wu-chip[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+
+.fl-status {
+  margin: var(--sp-3) 0 0;
+  min-height: 1.2em;
+  font-size: var(--step--3);
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+
+@media (min-width: 480px) {
+  .fl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+  .wu-toggle { grid-column: 1 / -1; order: 3; }
+}
+
 /* ── hint + error ────────────────────────────────────────────── */
 .hint {
   margin: var(--sp-3) 0 0;

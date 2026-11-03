@@ -139,6 +139,36 @@
 
       <p id="hint-line" class="hint">AWAITING INPUT</p>
       <p id="err-line" class="err"></p>
+
+      <details id="fl-panel" class="fl-panel">
+        <summary class="fl-summary">
+          <span class="fl-caret" aria-hidden="true">▸</span>
+          <span class="fl-title">FEELS LIKE</span>
+          <span id="fl-val" class="fl-val is-empty">——</span>
+        </summary>
+        <div class="fl-body">
+          <p class="fl-note">OPTIONAL — NWS MODEL: WIND CHILL ≤ 10 °C · HEAT INDEX ≥ 27 °C</p>
+          <div class="fl-grid">
+            <div class="fl-field">
+              <label class="micro-label" for="input-wind">WIND · <span id="wind-unit-tag">KM/H</span></label>
+              <input id="input-wind" class="fl-input" type="text" inputmode="decimal"
+                     autocomplete="off" autocorrect="off" autocapitalize="none"
+                     spellcheck="false" maxlength="7" placeholder="—">
+            </div>
+            <div class="wu-toggle" role="group" aria-label="Wind unit">
+              <button id="wu-kmh" class="chip wu-chip" type="button" aria-pressed="true">KM/H</button>
+              <button id="wu-mph" class="chip wu-chip" type="button" aria-pressed="false">MPH</button>
+            </div>
+            <div class="fl-field">
+              <label class="micro-label" for="input-rh">HUMIDITY · %</label>
+              <input id="input-rh" class="fl-input" type="text" inputmode="decimal"
+                     autocomplete="off" autocorrect="off" autocapitalize="none"
+                     spellcheck="false" maxlength="5" placeholder="—">
+            </div>
+          </div>
+          <p id="fl-status" class="fl-status" aria-live="polite"></p>
+        </div>
+      </details>
     </section>
 
     <section class="bay bay-recent" aria-labelledby="head-recent">
