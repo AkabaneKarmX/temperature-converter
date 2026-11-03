@@ -518,7 +518,7 @@ button, a, [role="button"] {
 }
 
 .fl-val {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--fg);
