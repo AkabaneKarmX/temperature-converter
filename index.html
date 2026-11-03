@@ -2,36 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Convert temperatures between Celsius, Fahrenheit and Kelvin.">
-  <link rel="stylesheet" href="Stylesheets/style.css">
-  <title>Temperature Converter</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0A">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F4F4F0">
+  <meta name="description" content="Instrument-grade temperature converter — Celsius, Fahrenheit, Kelvin, Rankine. Live readout, absolute-zero guard, offline-capable.">
+  <title>TEMP·CONV — temperature instrument</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="Stylesheets/app.css">
 </head>
 
 <body>
-  <div class="temperature-converter">
-    <h1>Temperature Converter</h1>
+  <a class="skip-link" href="#app-main">Skip to instrument</a>
 
-    <div class="temperature-inputs">
-      <label for="temperatureValue">Enter a temperature (Celsius, Kelvin or Fahrenheit):</label>
-      <input type="text" id="temperatureValue" inputmode="decimal">
+  <header class="top-strip">
+    <p class="brand">
+      <span class="brand-mark">[ TEMP·CONV ]</span>
+      <span class="brand-sub">UNIT 02 · TEMPERATURE</span>
+    </p>
+    <div class="top-actions">
+      <button id="btn-update" class="chip chip-live hidden" type="button">RELOAD</button>
+      <button id="btn-share" class="icon-btn" type="button" aria-label="Copy shareable link">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+          <path d="M6 10L10 6M7.5 4.5l1.5-1.5a2.5 2.5 0 013.5 3.5L11 8M8.5 11.5L7 13a2.5 2.5 0 01-3.5-3.5L5 8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+      </button>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+          <path d="M13.5 9.5A6 6 0 016.5 2.5a6 6 0 107 7z" fill="currentColor"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+          <circle cx="8" cy="8" r="3" fill="currentColor"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
     </div>
+  </header>
 
-    <div class="temperature-units">
-      <label for="celsiusToKelvin"><input type="radio" name="tempUnit" id="celsiusToKelvin" checked>Celsius to Kelvin</label>
-      <label for="celsiusToFahrenheit"><input type="radio" name="tempUnit" id="celsiusToFahrenheit">Celsius to Fahrenheit</label>
-      <label for="kelvinToFahrenheit"><input type="radio" name="tempUnit" id="kelvinToFahrenheit">Kelvin to Fahrenheit</label>
-      <label for="fahrenheitToKelvin"><input type="radio" name="tempUnit" id="fahrenheitToKelvin">Fahrenheit to Kelvin</label>
-    </div>
+  <main id="app-main" class="instrument">
 
-    <div class="buttons-and-outputs">
-      <button id="submitButton">Submit</button>
-      <button id="resetButton">Reset</button>
-      <p>Answer: <span id="tempValue" aria-live="polite"></span></p>
-    </div>
-  </div>
+    <h1 class="visually-hidden">Temperature converter instrument</h1>
 
-  <script src="Scripts/index.js"></script>
+    <section class="bay bay-io" aria-labelledby="head-io">
+      <h2 id="head-io" class="bay-head">[ INPUT / OUTPUT ]</h2>
+
+      <div class="pair-row">
+        <div class="unit-field">
+          <label class="micro-label" for="unit-from">SOURCE</label>
+          <select id="unit-from" class="unit-select">
+            <option value="C">°C — Celsius</option>
+            <option value="F">°F — Fahrenheit</option>
+            <option value="K">K — Kelvin</option>
+            <option value="R">°R — Rankine</option>
+          </select>
+        </div>
+        <button id="swap-units" class="icon-btn swap-btn" type="button" aria-label="Swap source and target units">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+            <path d="M4 3v9M4 3L1.5 5.5M4 3l2.5 2.5M12 13V4M12 13l2.5-2.5M12 13l-2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          </svg>
+        </button>
+        <div class="unit-field">
+          <label class="micro-label" for="unit-to">TARGET</label>
+          <select id="unit-to" class="unit-select">
+            <option value="C">°C — Celsius</option>
+            <option value="F">°F — Fahrenheit</option>
+            <option value="K">K — Kelvin</option>
+            <option value="R">°R — Rankine</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="value-row">
+        <div class="value-field">
+          <label class="micro-label" for="input-temp">VALUE · <span id="src-tag">°C</span></label>
+          <input id="input-temp" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="go" maxlength="16" placeholder="0.00" aria-describedby="hint-line err-line">
+        </div>
+        <button id="sign-flip" class="sign-btn" type="button" aria-label="Invert sign of the value">±</button>
+      </div>
+
+      <div class="presets" id="preset-strip" role="group" aria-label="Reference points">
+        <button class="preset" type="button" data-refc="0" aria-label="Load freezing point">FREEZING <span class="preset-val">0</span></button>
+        <button class="preset" type="button" data-refc="37" aria-label="Load body temperature">BODY <span class="preset-val">37</span></button>
+        <button class="preset" type="button" data-refc="100" aria-label="Load boiling point">BOIL <span class="preset-val">100</span></button>
+        <button class="preset" type="button" data-refc="-273.15" aria-label="Load absolute zero">ABS.ZERO <span class="preset-val">−273.15</span></button>
+      </div>
+
+      <div class="prec-row">
+        <label class="micro-label" for="precision-scale">PRECISION</label>
+        <div class="select-wrap">
+          <select id="precision-scale" class="unit-select prec-select">
+            <option value="0">0 dp</option>
+            <option value="1">1 dp</option>
+            <option value="2" selected>2 dp</option>
+            <option value="3">3 dp</option>
+            <option value="4">4 dp</option>
+          </select>
+        </div>
+        <span class="prec-note">comma or dot both parse</span>
+      </div>
+    </section>
+
+    <section class="bay bay-out" aria-labelledby="head-out">
+      <h2 id="head-out" class="bay-head">[ READOUT ]</h2>
+
+      <div class="hero">
+        <p class="micro-label">TARGET · <span id="tgt-tag">°F</span></p>
+        <p class="hero-value"><span id="hero-value">——</span><span id="hero-unit" class="hero-unit">°F</span></p>
+        <button id="copy-hero" class="chip copy-chip" type="button">COPY</button>
+      </div>
+
+      <ul class="rows" id="row-list">
+        <li class="row" data-unit="C">
+          <span class="row-tag">°C</span>
+          <span class="row-val" id="row-val-C" data-out>——</span>
+          <button class="chip copy-chip" type="button" data-copy="C" aria-label="Copy Celsius result">COPY</button>
+        </li>
+        <li class="row" data-unit="F">
+          <span class="row-tag">°F</span>
+          <span class="row-val" id="row-val-F" data-out>——</span>
+          <button class="chip copy-chip" type="button" data-copy="F" aria-label="Copy Fahrenheit result">COPY</button>
+        </li>
+        <li class="row" data-unit="K">
+          <span class="row-tag">K</span>
+          <span class="row-val" id="row-val-K" data-out>——</span>
+          <button class="chip copy-chip" type="button" data-copy="K" aria-label="Copy Kelvin result">COPY</button>
+        </li>
+        <li class="row" data-unit="R">
+          <span class="row-tag">°R</span>
+          <span class="row-val" id="row-val-R" data-out>——</span>
+          <button class="chip copy-chip" type="button" data-copy="R" aria-label="Copy Rankine result">COPY</button>
+        </li>
+      </ul>
+
+      <p id="hint-line" class="hint">AWAITING INPUT</p>
+      <p id="err-line" class="err"></p>
+    </section>
+
+    <section class="bay bay-recent" aria-labelledby="head-recent">
+      <h2 id="head-recent" class="bay-head">[ RECENT · CAP 5 ]</h2>
+      <button id="recent-clear" class="chip" type="button">CLEAR</button>
+      <ol id="recent-list" class="recent"></ol>
+    </section>
+
+  </main>
+
+  <p id="live-region" class="visually-hidden" role="status"></p>
+
+  <footer class="foot-strip">
+    <p class="foot-stamp">REV 3.0 · OFFLINE-CAPABLE · NO TELEMETRY LEAVES THIS DEVICE</p>
+  </footer>
+
+  <script src="Scripts/convert.js" defer></script>
+  <script src="Scripts/app.js" defer></script>
 </body>
 </html>
