@@ -584,5 +584,14 @@ button, a, [role="button"] {
   .hero-value { font-size: 5.5rem; }
 }
 
+@media (min-width: 960px) {
+  .instrument, .foot-strip { max-width: 1080px; }
+  .instrument {
+    grid-template-columns: 5fr 7fr;
+    align-items: start;
+  }
+  .bay-recent { grid-column: 1 / -1; }
+}
+
 /* ── misc ────────────────────────────────────────────────────── */
 .hidden { display: none; }
