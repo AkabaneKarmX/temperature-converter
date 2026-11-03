@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const CACHE = 'tempconv-v3.0.0';
+const CACHE = 'tempconv-v3.0.1';
 const ASSETS = [
   './index.html',
   './Stylesheets/app.css',

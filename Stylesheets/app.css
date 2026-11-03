@@ -88,6 +88,11 @@ html {
   scroll-behavior: smooth;
 }
 
+body,
+html {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   min-height: 100svh;
@@ -186,7 +191,7 @@ button, a, [role="button"] {
   color: var(--faint);
 }
 
-.top-actions { display: flex; gap: var(--sp-2); }
+.top-actions { display: flex; gap: var(--sp-2); flex: 0 0 auto; }
 
 .icon-btn {
   display: inline-flex;
@@ -246,7 +251,7 @@ button, a, [role="button"] {
 /* ── source / target pair ─────────────────────────────────────── */
 .pair-row {
   display: grid;
-  grid-template-columns: 1fr 44px 1fr;
+  grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: end;
   margin-bottom: var(--sp-4);
@@ -258,6 +263,7 @@ button, a, [role="button"] {
 
 .unit-select {
   width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-3);
   padding-right: var(--sp-6);
@@ -269,6 +275,9 @@ button, a, [role="button"] {
   border-radius: var(--r-0);
   appearance: none;
   cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .select-wrap::after {
@@ -356,7 +365,7 @@ button, a, [role="button"] {
 /* ── precision ───────────────────────────────────────────────── */
 .prec-row {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: end;
   margin-top: var(--sp-4);
@@ -368,6 +377,8 @@ button, a, [role="button"] {
   color: var(--faint);
   text-align: right;
   align-self: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* ── readout bay ─────────────────────────────────────────────── */
@@ -412,6 +423,8 @@ button, a, [role="button"] {
 }
 
 .hero-value> span:first-child { overflow-wrap: anywhere; }
+
+#hero-value.is-empty { opacity: 0.16; }
 
 .hero-unit {
   font-size: 0.35em;

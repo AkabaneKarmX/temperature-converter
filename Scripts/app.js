@@ -201,8 +201,14 @@
   }
   function setHeroTempColor(c) {
     if (!pal) palette();
-    var t = Math.max(0, Math.min(1, (c + 40) / 100));
-    var s = t * t * (3 - 2 * t); // smoothstep: room temp stays near-neutral
+    var s;
+    if (c <= 20) {
+      // cold side: max cold-blue at -40°, neutral at 20° — make 37° body-temp feel mildly warm
+      s = 0.5 * ((c + 40) / 60);
+    } else {
+      s = 0.5 + 0.5 * ((c - 20) / 40);
+    }
+    s = Math.max(0, Math.min(1, s));
     elHeroVal.style.color = s < 0.5
       ? mix(pal.cold, pal.fg, s / 0.5)
       : mix(pal.fg, pal.hot, (s - 0.5) / 0.5);
@@ -252,6 +258,7 @@
   /* ── render ─────────────────────────────────────────────────── */
   function clearRender() {
     elHeroVal.textContent = '——';
+    elHeroVal.classList.add('is-empty');
     resetHeroColor();
     T.SCALES.forEach(function (u) { elRowVal[u].textContent = '——'; });
     elHint.textContent = 'AWAITING INPUT';
@@ -271,6 +278,7 @@
     elErr.textContent = msg;
     elInput.setAttribute('aria-invalid', 'true');
     elHeroVal.textContent = '——';
+    elHeroVal.classList.add('is-empty');
     resetHeroColor();
     T.SCALES.forEach(function (u) { elRowVal[u].textContent = '——'; });
     elHint.textContent = 'AWAITING VALID INPUT';
@@ -289,6 +297,7 @@
     elErr.textContent = '';
 
     elHeroVal.textContent = T.fmt(heroOut, prec);
+    elHeroVal.classList.remove('is-empty');
     setHeroTempColor(vres.c);
     elHeroUnit.textContent = SYM[toU];
     elTgtTag.textContent = SYM[toU];
