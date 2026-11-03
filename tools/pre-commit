@@ -1,0 +1,4 @@
+#!/bin/sh
+# TEMP·CONV — pre-commit guard.
+# Install (repo root):  cp tools/pre-commit .git/hooks/pre-commit
+exec node "$(dirname "$0")"/../../tools/check-cache.js
